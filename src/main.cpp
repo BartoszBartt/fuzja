@@ -1,36 +1,52 @@
 #include <Arduino.h>
 #include <LSM6DSLSensor.h>
-#include <LSM303AGR_ACC_Sensor.h>
-#include <LSM303AGR_MAG_Sensor.h>
-#include <LPS22HHSensor.h>
-#include <HTS221Sensor.h>
+#include <Wire.h>
 
 #define numAxes 3
-LSM6DSLSensor *AccGyr;
-LSM303AGR_ACC_Sensor *Acc;
-LSM303AGR_MAG_Sensor *Mag;
-LPS22HHSensor *PressTemp;
+
+LSM6DSLSensor *AccGyr; // Akcelerometr i żyroskop
+
 uint32_t previous_tick = 0;
 uint32_t current_tick = 0;
 char report[256];
+
 void setup() {
-// put your setup code here, to run once:
-Serial.begin(115200);
-Wire.begin();
-AccGyr = new LSM6DSLSensor(&Wire);
-AccGyr->begin();
-AccGyr->Enable_X();
-previous_tick = micros();
+  // Inicjalizacja monitora szeregowego
+  Serial.begin(115200);
+  Wire.begin();
+
+  // Inicjalizacja akcelerometru i żyroskopu
+  AccGyr = new LSM6DSLSensor(&Wire);
+  AccGyr->begin();
+  AccGyr->Enable_X(); // Włączenie akcelerometru
+  AccGyr->Enable_G(); // Włączenie żyroskopu
+
+  previous_tick = micros();
 }
+
 void loop() {
-// put your main code here, to run repeatedly:
-int32_t sensorData[numAxes];
-current_tick = micros();
-if((current_tick - previous_tick) >= 100000){
-AccGyr->Get_X_Axes(sensorData);
-sprintf(report, "AccX: %d | AccY: %d | AccZ: %d \n",
-sensorData[0],sensorData[1],sensorData[2]);
-Serial.print(report);
-previous_tick = micros();
-}
+  // Bufory na dane z akcelerometru i żyroskopu
+  int32_t accelData[numAxes];
+  int32_t gyroData[numAxes];
+
+  current_tick = micros();
+  // Odczyt co 100 ms (100000 µs)
+  if ((current_tick - previous_tick) >= 100000) {
+    // Pobierz dane z akcelerometru
+    AccGyr->Get_X_Axes(accelData);
+
+    // Pobierz dane z żyroskopu
+    AccGyr->Get_G_Axes(gyroData);
+
+    // Wyświetl dane na monitorze szeregowym
+    sprintf(report,
+            "AccX: %d | AccY: %d | AccZ: %d | "
+            "GyroX: %d | GyroY: %d | GyroZ: %d\n",
+            accelData[0], accelData[1], accelData[2],
+            gyroData[0], gyroData[1], gyroData[2]);
+    Serial.print(report);
+
+    // Zresetuj znacznik czasu
+    previous_tick = micros();
+  }
 }
