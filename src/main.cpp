@@ -31,7 +31,7 @@ void loop() {
 
   current_tick = micros();
   // Odczyt co 100 ms (100000 µs)
-  if ((current_tick - previous_tick) >= 100000) {
+  if ((current_tick - previous_tick) >= 5000) {
     // Pobierz dane z akcelerometru
     AccGyr->Get_X_Axes(accelData);
 
